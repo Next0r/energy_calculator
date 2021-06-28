@@ -51,7 +51,7 @@ const readPNGRenderMetadata = (buffer = "") => {
       ] = chunkArray[1];
     } else {
       renderMetadata[
-        `${chunkArray[0]
+        `${type
           .replace(/tEXt[\s\S]/, (match) => {
             return match[match.length - 1].toLowerCase();
           })

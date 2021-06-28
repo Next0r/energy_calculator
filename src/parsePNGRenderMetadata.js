@@ -18,7 +18,7 @@ const parsePNGRenderMetadata = (rawRenderMetadata) => {
     cyclesMainSynchronizationTime: 0,
   };
 
-  if (renderMetadata.time !== null) {
+  if (rawRenderMetadata.time !== null) {
     let timeArray = rawRenderMetadata.time.split(":");
     renderMetadata.time.setHours(timeArray[0]);
     renderMetadata.time.setMinutes(timeArray[1]);
@@ -34,7 +34,7 @@ const parsePNGRenderMetadata = (rawRenderMetadata) => {
   ];
 
   for (property of properties) {
-    if (property !== null) {
+    if (rawRenderMetadata[property] !== null) {
       timeArray = rawRenderMetadata[property].split(/[:|\.]/g);
       renderMetadata[property] =
         ((+timeArray[0] * 60 + +timeArray[1]) * 100 + +timeArray[2]) * 10;
