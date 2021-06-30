@@ -2,9 +2,8 @@ const path = require("path");
 const { calculateEnergy } = require("./calculateEnergy");
 const { getRecordsFromFiles } = require("./getRecordsFromFiles");
 const { parsePNGRenderMetadata } = require("./parsePNGRenderMetadata");
-const { readDirectory } = require("./readDirectory");
-const { readFile } = require("./readFile");
 const { readPNGRenderMetadata } = require("./readPNGRenderMetadata");
+const fs = require("fs");
 
 /**
  * Calculates energy for all images in specified directory
@@ -12,45 +11,55 @@ const { readPNGRenderMetadata } = require("./readPNGRenderMetadata");
  * @param {string} recordsDirPath path to power records directory
  * @returns array of metadata (object) and energy (number) for each image in images directory
  */
-const calculateEnergyForImages = async (
-  imagesDirPath = "",
-  recordsDirPath = ""
-) => {
-  const imagesNames = await readDirectory(imagesDirPath);
+const calculateEnergyForImages = (imagesDirPath = "", recordsDirPath = "") => {
+  let imageNames;
+
+  try {
+    imagesNames = fs.readdirSync(imagesDirPath);
+  } catch (e) {
+    throw e;
+  }
 
   const results = [];
 
-  for (imageName of imagesNames) {
-    const imageDataBuffer = await readFile(path.join(imagesDirPath, imageName));
-    const rawRenderMetadata = readPNGRenderMetadata(imageDataBuffer);
-    const renderMetadata = parsePNGRenderMetadata(rawRenderMetadata);
+  try {
+    for (imageName of imagesNames) {
+      const imageDataBuffer = fs.readFileSync(path.join(imagesDirPath, imageName), {
+        encoding: "utf8",
+        flag: "r",
+      });
 
-    const renderStartTime =
-      renderMetadata.date.getTime() - renderMetadata.cyclesMainRenderTime;
-    const renderEndTime = renderMetadata.date.getTime();
+      const rawRenderMetadata = readPNGRenderMetadata(imageDataBuffer);
+      const renderMetadata = parsePNGRenderMetadata(rawRenderMetadata);
 
-    const records = await getRecordsFromFiles(
-      recordsDirPath,
-      renderStartTime,
-      renderEndTime
-    );
+      const renderStartTime = renderMetadata.date.getTime() - renderMetadata.cyclesMainRenderTime;
+      const renderEndTime = renderMetadata.date.getTime();
 
-    const energy = calculateEnergy(records, renderStartTime, renderEndTime);
+      const records = getRecordsFromFiles(recordsDirPath, renderStartTime, renderEndTime);
 
-    results.push({ renderMetadata: renderMetadata, renderEnergy: energy });
+      const energy = calculateEnergy(records, renderStartTime, renderEndTime);
+
+      results.push({ renderMetadata: renderMetadata, renderEnergy: energy });
+    }
+  } catch (e) {
+    throw e;
   }
 
   return results;
 };
 
-const main = async () => {
+const main = () => {
   const imagesDirPath = path.join(__dirname, "..", "res", "images");
   const recordsDirPath = path.join(__dirname, "..", "res", "records");
 
-  const renderingEnergy = await calculateEnergyForImages(
-    imagesDirPath,
-    recordsDirPath
-  );
+  let renderingEnergy;
+
+  try {
+    renderingEnergy = calculateEnergyForImages(imagesDirPath, recordsDirPath);
+  } catch (e) {
+    console.warn(e.stack);
+    return;
+  }
 
   console.log(renderingEnergy);
   console.log();

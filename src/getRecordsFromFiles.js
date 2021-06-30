@@ -1,7 +1,5 @@
 const path = require("path");
-const { parseRecordFileName } = require("./parseRecordFileName");
-const { readDirectory } = require("./readDirectory");
-const { readFile } = require("./readFile");
+const fs = require("fs");
 
 /**
  * Finds and returns records from files matching time range (multiple files in range or single file over that range)
@@ -10,37 +8,59 @@ const { readFile } = require("./readFile");
  * @param {number} timeEnd end of records time range in ms (from 1-1-1970)
  * @returns set of records from files matching given time range
  */
-const getRecordsFromFiles = async (
-  recordsDirectoryPath = "",
-  timeStart = 0,
-  timeEnd = 0
-) => {
-  const recordFilesNames = await readDirectory(recordsDirectoryPath);
-  const fileNames = [];
+const getRecordsFromFiles = (recordsDirectoryPath = "", timeStart = 0, timeEnd = 0) => {
+  let recordFilesNames;
+
+  try {
+    recordFilesNames = fs.readdirSync(recordsDirectoryPath);
+  } catch (e) {
+    throw e;
+  }
+
+  const outRecords = [];
 
   for (fileName of recordFilesNames) {
-    const recordTime = parseRecordFileName(fileName).getTime();
+    let recordsRaw;
 
-    if (recordTime > timeStart) {
-      fileNames.push(fileName);
+    try {
+      recordsRaw = fs.readFileSync(path.join(recordsDirectoryPath, fileName), {
+        encoding: "utf8",
+        flag: "r",
+      });
+    } catch (e) {
+      throw e;
+    }
 
-      if (recordTime > timeEnd) {
-        break;
+    /**
+     * @typedef {Object} Record
+     * @property {string} timestamp
+     * @property {string} value
+     */
+
+    /**
+     * @type {Record[]}
+     */
+    const records = JSON.parse(recordsRaw);
+
+    const firstRecTime = new Date(records[0].timestamp).getTime();
+    const lastRecTime = new Date(records[records.length - 1].timestamp).getTime();
+
+    if (timeEnd < firstRecTime || timeStart > lastRecTime) {
+      continue;
+    }
+
+    for (record of records) {
+      const recordTime = new Date(record.timestamp).getTime();
+
+      if (recordTime >= timeStart && recordTime <= timeEnd) {
+        outRecords.push({ timestamp: new Date(record.timestamp), value: parseFloat(record.value) });
       }
     }
   }
 
-  const records = [];
+  outRecords.sort((r1, r2) => r1.timestamp.getTime() - r2.timestamp.getTime());
 
-  for (fileName of fileNames) {
-    const filePath = path.join(recordsDirectoryPath, fileName);
-    let data = await readFile(filePath);
-    data = JSON.parse(data);
-
-    records.push(...data);
-  }
-
-  return records;
+  return outRecords;
 };
 
 module.exports.getRecordsFromFiles = getRecordsFromFiles;

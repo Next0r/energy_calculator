@@ -18,48 +18,46 @@
  * @returns {RawRenderMetadata} object that stores metadata as key-value pairs, where value is represented as string or null
  */
 const readPNGRenderMetadata = (buffer = "") => {
-  const metadataTypes = [
-    "tEXtDate",
-    "tEXtTime",
-    "tEXtFrame",
-    "tEXtFrameRange",
-    "tEXtRenderTime",
-    "tEXtMemory",
-    "tEXtcycles.main.samples",
-    "tEXtcycles.main.total_time",
-    "tEXtcycles.main.render_time",
-    "tEXtcycles.main.synchronization_time",
+  const metadataNames = [
+    "Date",
+    "Time",
+    "Frame",
+    "FrameRange",
+    "RenderTime",
+    "Memory",
+    "cycles.main.samples",
+    "cycles.main.total_time",
+    "cycles.main.render_time",
+    "cycles.main.synchronization_time",
   ];
 
   const renderMetadata = {};
 
-  for (type of metadataTypes) {
-    const regex = new RegExp(`${type}\x00.+?(?=\x00\x00)`, "g");
-    const chunk = buffer.match(regex);
+  for (name of metadataNames) {
+    const index = buffer.search(new RegExp(`tEXt${name}`, "g"));
+    const key = name
+      .replace(/[A-Z]/, (match) => match[0].toLocaleLowerCase())
+      .replace(/[\.|\_][\s\S]/g, (match) => match[1].toUpperCase());
 
-    if (chunk) {
-      const chunkArray = chunk[0].slice(0, -4).split(/\x00/g);
-
-      renderMetadata[
-        `${chunkArray[0]
-          .replace(/tEXt[\s\S]/, (match) => {
-            return match[match.length - 1].toLowerCase();
-          })
-          .replace(/[\. | \_][\s\S]/g, (match) => {
-            return match[1].toUpperCase();
-          })}`
-      ] = chunkArray[1];
-    } else {
-      renderMetadata[
-        `${type
-          .replace(/tEXt[\s\S]/, (match) => {
-            return match[match.length - 1].toLowerCase();
-          })
-          .replace(/[\. | \_][\s\S]/g, (match) => {
-            return match[1].toUpperCase();
-          })}`
-      ] = null;
+    if (index === -1) {
+      renderMetadata[key] = null;
+      continue;
     }
+
+    const chunkLengthString = buffer.slice(index - 4, index);
+    let length = 0x00000000;
+
+    for (let i = 0; i < chunkLengthString.length; i += 1) {
+      length |= chunkLengthString.charCodeAt(i);
+      length << 2;
+    }
+
+    const data = buffer
+      .slice(index + 4, index + 4 + length)
+      .split(/\x00/g)
+      .pop();
+
+    renderMetadata[key] = data;
   }
 
   return renderMetadata;

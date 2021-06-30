@@ -1,0 +1,22 @@
+{
+  "name": "energy_calculator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Next0r/energy_calculator.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Next0r/energy_calculator/issues"
+  },
+  "homepage": "https://github.com/Next0r/energy_calculator#readme",
+  "prettier":{
+    "printWidth": 100
+  }
+}
