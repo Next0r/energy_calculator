@@ -4,6 +4,7 @@ const { getRecordsFromFiles } = require("./getRecordsFromFiles");
 const { parsePNGRenderMetadata } = require("./parsePNGRenderMetadata");
 const { readPNGRenderMetadata } = require("./readPNGRenderMetadata");
 const fs = require("fs");
+const { JSONToCSV } = require("./JSONToCSV");
 
 /**
  * Calculates energy for all images in specified directory
@@ -39,7 +40,12 @@ const calculateEnergyForImages = (imagesDirPath = "", recordsDirPath = "") => {
 
       const energy = calculateEnergy(records, renderStartTime, renderEndTime);
 
-      results.push({ renderMetadata: renderMetadata, renderEnergy: energy });
+      results.push({
+        frame: renderMetadata.frame,
+        renderTime: renderMetadata.cyclesMainRenderTime,
+        // date: renderMetadata.date,
+        energy: energy,
+      });
     }
   } catch (e) {
     throw e;
@@ -51,18 +57,17 @@ const calculateEnergyForImages = (imagesDirPath = "", recordsDirPath = "") => {
 const main = () => {
   const imagesDirPath = path.join(__dirname, "..", "res", "images");
   const recordsDirPath = path.join(__dirname, "..", "res", "records");
+  const csvDirPath = path.join(__dirname, "..", "res", "csv");
 
   let renderingEnergy;
 
   try {
     renderingEnergy = calculateEnergyForImages(imagesDirPath, recordsDirPath);
+    JSONToCSV(renderingEnergy, "energy", csvDirPath);
   } catch (e) {
     console.warn(e.stack);
     return;
   }
-
-  console.log(renderingEnergy);
-  console.log();
 };
 
 main();
