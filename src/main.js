@@ -47,8 +47,8 @@ const calculateEnergyForImages = (
       results.push({
         frame: renderMetadata.frame,
         renderTime: renderMetadata.cyclesMainRenderTime,
-        // date: renderMetadata.date,
-        energy: energy,
+        energy: energy.energy,
+        averagePower: energy.averagePower,
       });
 
       onImageProcessed(imageName);
