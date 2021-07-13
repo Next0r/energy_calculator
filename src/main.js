@@ -12,7 +12,11 @@ const { JSONToCSV } = require("./JSONToCSV");
  * @param {string} recordsDirPath path to power records directory
  * @returns array of metadata (object) and energy (number) for each image in images directory
  */
-const calculateEnergyForImages = (imagesDirPath = "", recordsDirPath = "") => {
+const calculateEnergyForImages = (
+  imagesDirPath = "",
+  recordsDirPath = "",
+  { onImageProcessed = (imageName = "") => {} } = {}
+) => {
   let imageNames;
 
   try {
@@ -46,6 +50,8 @@ const calculateEnergyForImages = (imagesDirPath = "", recordsDirPath = "") => {
         // date: renderMetadata.date,
         energy: energy,
       });
+
+      onImageProcessed(imageName);
     }
   } catch (e) {
     throw e;
@@ -62,7 +68,11 @@ const main = () => {
   let renderingEnergy;
 
   try {
-    renderingEnergy = calculateEnergyForImages(imagesDirPath, recordsDirPath);
+    renderingEnergy = calculateEnergyForImages(imagesDirPath, recordsDirPath, {
+      onImageProcessed: (imageName) => {
+        console.log(`Processed image: ${imageName}`);
+      },
+    });
     JSONToCSV(renderingEnergy, "energy", csvDirPath);
   } catch (e) {
     console.warn(e.stack);
