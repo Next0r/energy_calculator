@@ -2,6 +2,12 @@ const path = require("path");
 const fs = require("fs");
 
 /**
+ * @typedef {Object} Record
+ * @property {string} timestamp
+ * @property {string} value
+ */
+
+/**
  * Finds and returns records from files matching time range (multiple files in range or single file over that range)
  * @param {string} recordsDirectoryPath records directory path
  * @param {number} timeStart beginning of records time range in ms (from 1-1-1970)
@@ -30,12 +36,6 @@ const getRecordsFromFiles = (recordsDirectoryPath = "", timeStart = 0, timeEnd =
     } catch (e) {
       throw e;
     }
-
-    /**
-     * @typedef {Object} Record
-     * @property {string} timestamp
-     * @property {string} value
-     */
 
     /**
      * @type {Record[]}
